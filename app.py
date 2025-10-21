@@ -1,37 +1,107 @@
 import streamlit as st
+import pandas as pd
+import plotly.express as px
 
 st.set_page_config(
     page_title="🍕 Restaurant Analytics",
     page_icon="🍕",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Sidebar rejtve
 )
 
 # ============================================================================
-# CUSTOM CSS
+# CUSTOM CSS - Szürke háttér + Bottom Navigation
 # ============================================================================
 
 st.markdown("""
 <style>
-    .main {padding: 0 !important;}
-    .block-container {padding: 1rem !important;}
+    /* Szürke háttér mindenhol */
+    .main {
+        background-color: #f5f5f5 !important;
+        padding-bottom: 80px !important; /* Hely a bottom nav-nak */
+    }
+    
+    .block-container {
+        padding: 1rem !important;
+        background-color: #f5f5f5 !important;
+    }
+    
+    /* Hero section */
     .hero {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 2rem;
         border-radius: 1rem;
         color: white;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
         text-align: center;
     }
+    
+    /* Kártyák fehér háttérrel */
     .metric-card {
         background: white;
         padding: 1.5rem;
         border-radius: 1rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         text-align: center;
+    }
+    
+    /* BOTTOM NAVIGATION BAR */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-around;
+        padding: 0.75rem 0;
+        z-index: 999;
+    }
+    
+    .nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        color: #6b7280;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .nav-item:hover {
+        color: #667eea;
+    }
+    
+    .nav-item.active {
+        color: #667eea;
+        font-weight: bold;
+    }
+    
+    .nav-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    /* Sidebar elrejtése */
+    [data-testid="stSidebar"] {
+        display: none;
+    }
+    
+    /* Streamlit header elrejtése */
+    header {
+        visibility: hidden;
     }
 </style>
 """, unsafe_allow_html=True)
+
+# ============================================================================
+# SESSION STATE - Oldal választás
+# ============================================================================
+
+if 'page' not in st.session_state:
+    st.session_state.page = 'dashboard'
 
 # ============================================================================
 # HERO SECTION
@@ -45,20 +115,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# SIDEBAR
+# PAGE CONTENT
 # ============================================================================
 
-st.sidebar.title("🍽️ Navigáció")
-page = st.sidebar.radio(
-    "Válassz oldalt:",
-    ["📊 Dashboard", "🧠 AI Insights", "⚙️ Beállítások"]
-)
-
-# ============================================================================
-# DASHBOARD PAGE
-# ============================================================================
-
-if page == "📊 Dashboard":
+if st.session_state.page == 'dashboard':
+    # DASHBOARD PAGE
     st.header("📊 Dashboard - Élő Statisztikák")
     
     # KPI metrics
@@ -75,12 +136,8 @@ if page == "📊 Dashboard":
     
     st.info("💡 **Demo mód** – Kapcsold be a valós idejű szinkronizálást a Beállítások oldalon!")
     
-    # Placeholder chart
+    # Chart
     st.subheader("📈 Napi bevétel trend")
-    import pandas as pd
-    import plotly.express as px
-    
-    # Demo data
     df = pd.DataFrame({
         'Dátum': pd.date_range('2025-10-14', periods=7),
         'Bevétel': [150000, 180000, 165000, 195000, 210000, 185000, 220000]
@@ -91,11 +148,8 @@ if page == "📊 Dashboard":
     fig.update_layout(height=300)
     st.plotly_chart(fig, use_container_width=True)
 
-# ============================================================================
-# AI INSIGHTS PAGE
-# ============================================================================
-
-elif page == "🧠 AI Insights":
+elif st.session_state.page == 'insights':
+    # AI INSIGHTS PAGE
     st.header("🧠 AI Insights - Adatvezérelt javaslatok")
     
     st.success("✅ **Top Javaslat:** Vezess be Happy Hour-t kedden 17-19h között → +80,000 Ft/hó")
@@ -127,11 +181,8 @@ elif page == "🧠 AI Insights":
     
     st.info("📊 További insights elérhető valós adatok feltöltése után!")
 
-# ============================================================================
-# SETTINGS PAGE
-# ============================================================================
-
-elif page == "⚙️ Beállítások":
+elif st.session_state.page == 'settings':
+    # SETTINGS PAGE
     st.header("⚙️ Beállítások")
     
     st.subheader("🔄 Automatikus szinkronizálás")
@@ -171,12 +222,44 @@ elif page == "⚙️ Beállítások":
         st.info("Kijelentkezés...")
 
 # ============================================================================
-# FOOTER
+# BOTTOM NAVIGATION BAR
 # ============================================================================
 
-st.markdown("---")
 st.markdown("""
-<div style='text-align: center; color: #6b7280; padding: 2rem;'>
-    <p>🍕 Restaurant Analytics © 2025 | Készítette: AI-powered Platform</p>
+<div class="bottom-nav">
+    <div class="nav-item {}" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'dashboard'}}, '*')">
+        <div class="nav-icon">📊</div>
+        <div>Dashboard</div>
+    </div>
+    <div class="nav-item {}" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'insights'}}, '*')">
+        <div class="nav-icon">🧠</div>
+        <div>Insights</div>
+    </div>
+    <div class="nav-item {}" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: 'settings'}}, '*')">
+        <div class="nav-icon">⚙️</div>
+        <div>Settings</div>
+    </div>
 </div>
-""", unsafe_allow_html=True)
+""".format(
+    'active' if st.session_state.page == 'dashboard' else '',
+    'active' if st.session_state.page == 'insights' else '',
+    'active' if st.session_state.page == 'settings' else ''
+), unsafe_allow_html=True)
+
+# Button navigation (mivel onclick nem működik Streamlit-ben)
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if st.button("📊 Dashboard", use_container_width=True, type="primary" if st.session_state.page == 'dashboard' else "secondary"):
+        st.session_state.page = 'dashboard'
+        st.rerun()
+
+with col2:
+    if st.button("🧠 Insights", use_container_width=True, type="primary" if st.session_state.page == 'insights' else "secondary"):
+        st.session_state.page = 'insights'
+        st.rerun()
+
+with col3:
+    if st.button("⚙️ Settings", use_container_width=True, type="primary" if st.session_state.page == 'settings' else "secondary"):
+        st.session_state.page = 'settings'
+        st.rerun()
